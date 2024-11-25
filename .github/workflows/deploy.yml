@@ -1,4 +1,4 @@
-name: Deploy WordPress Site
+name: Deploy WordPress and Import Database
 
 on:
   push:
@@ -10,21 +10,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-    - name: Set Up SSH
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H 52.91.211.86 >> ~/.ssh/known_hosts
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 -d > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H 52.91.211.86 >> ~/.ssh/known_hosts
 
-    - name: Deploy Files
-      run: |
-        rsync -avz --delete ./ ubuntu@52.91.211.86:/var/www/wordpress/sassylashez.com
+      - name: Copy Database File to Server
+        run: |
+          scp ./wordpress-db.sql ubuntu@52.91.211.86:/home/ubuntu/wordpress-db.sql
 
-    - name: Deploy Database
-      run: |
-        scp ./wordpress-db.sql ubuntu@52.91.211.86:/home/ubuntu/wordpress-db.sql
-        ssh ubuntu@52.91.211.86 'mysql -u <db_user> -p<db_password> <db_name> < /home/ubuntu/wordpress-db.sql'
+      - name: Deploy WordPress Files
+        run: |
+          rsync -avz --delete ./ ubuntu@52.91.211.86:/var/www/wordpress/sassylashez.com
+
+      - name: Import Database
+        run: |
+          ssh ubuntu@52.91.211.86 "mysql -u${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }} ${{ secrets.DB_NAME }} < /home/ubuntu/wordpress-db.sql"
