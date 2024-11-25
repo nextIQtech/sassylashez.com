@@ -13,16 +13,18 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Set up SSH
+      - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 -d > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H 52.91.211.86 >> ~/.ssh/known_hosts
+        shell: /usr/bin/bash -e {0}
 
       - name: Copy Database File to Server
         run: |
           scp ./wordpress-db.sql ubuntu@52.91.211.86:/home/ubuntu/wordpress-db.sql
+        shell: /usr/bin/bash -e {0}
 
       - name: Deploy WordPress Files
         run: |
