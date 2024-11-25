@@ -1,4 +1,4 @@
-name: Deploy WordPress and Import Database
+name: Deploy WordPress
 
 on:
   push:
@@ -21,15 +21,6 @@ jobs:
           ssh-keyscan -H 52.91.211.86 >> ~/.ssh/known_hosts
         shell: /usr/bin/bash -e {0}
 
-      - name: Copy Database File to Server
-        run: |
-          scp ./wordpress-db.sql ubuntu@52.91.211.86:/home/ubuntu/wordpress-db.sql
-        shell: /usr/bin/bash -e {0}
-
       - name: Deploy WordPress Files
         run: |
           rsync -avz --delete ./ ubuntu@52.91.211.86:/var/www/wordpress/sassylashez.com
-
-      - name: Import Database
-        run: |
-          ssh ubuntu@52.91.211.86 "mysql -u${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }} ${{ secrets.DB_NAME }} < /home/ubuntu/wordpress-db.sql"
